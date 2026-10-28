@@ -24,6 +24,23 @@
 		serial0 = &uart2;
 	};
 
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		ramoops@85100000 {
+			compatible = "ramoops";
+			reg = <0x0 0x85100000 0x0 0x100000>;
+			record-size = <0x40000>;
+			console-size = <0x40000>;
+			pmsg-size = <0x20000>;
+			ftrace-size = <0x0>;
+			ecc-size = <16>;
+			no-map;
+		};
+	};
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
