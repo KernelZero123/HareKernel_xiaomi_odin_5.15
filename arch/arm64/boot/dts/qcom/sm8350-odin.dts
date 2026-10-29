@@ -382,3 +382,53 @@
 
 	memory-region = <&pil_ipa_fw_mem>;
 };
+
+/* Xiaomi Mi MIX 4 - CSOT k8 panel on DSI0 */
+&mdss_dsi0_out {
+	remote-endpoint = <&k8_panel_in>;
+};
+
+&mdss_dsi0 {
+	status = "okay";
+	vddio-supply = <&vreg_l9b_1p2>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	panel@0 {
+		compatible = "xiaomi,odin-k8-panel";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 6 GPIO_ACTIVE_HIGH>;
+
+		vddio-supply = <&vreg_l9b_1p2>;
+		vddd-supply = <&vreg_l5b_0p88>;
+
+		port {
+			k8_panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0_phy {
+	status = "okay";
+	vdds-supply = <&vreg_l5b_0p88>;
+};
+
+&dispcc {
+	status = "okay";
+};
+
+&mdss_dsi1 {
+	status = "disabled";
+};
+
+&mdss_dsi1_phy {
+	status = "disabled";
+};

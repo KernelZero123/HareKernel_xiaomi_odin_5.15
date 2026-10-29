@@ -262,6 +262,15 @@ config DRM_PANEL_NOVATEK_NT35510
 	  around the Novatek NT35510 display controller, such as some
 	  Hydis panels.
 
+config DRM_PANEL_XIAOMI_ODIN_K8
+	tristate "CSOT k8 DSI panel for Xiaomi Mi MIX 4"
+	depends on OF
+	depends on DRM_MIPI_DSI
+	depends on BACKLIGHT_CLASS_DEVICE
+	help
+	  Say Y here for the CSOT k8 (xiaomi 42 02 0a) panel used in
+	  the Xiaomi Mi MIX 4 (odin).
+
 config DRM_PANEL_NOVATEK_NT36672A
 	tristate "Novatek NT36672A DSI panel"
 	depends on OF
