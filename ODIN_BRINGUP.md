@@ -106,3 +106,67 @@ the odin DTB yet. v2 is the practical test artifact.
 2. Port `dispcc-sm8350` clock controller.
 3. Port `gpucc-sm8350` + adreno support.
 4. Camera (camcc + CCI + CAMSS) — largest single chunk.
+
+---
+
+# Progress log (2026-10-29)
+
+## v1 — kernel boots (verified in qemu)
+
+`Run /init as init process` reached. Chain CPU -> memory -> DT -> initramfs
+works. But a bare GKI kernel drives nothing on real hardware.
+
+## v2/v3 — no USB device appeared
+
+Root cause found by auditing the built-in symbols, not the config file:
+
+```
+CONFIG_PHY_QCOM_QMP        was NOT set   <- USB PHY, nothing works without it
+CONFIG_QCOM_RPMH           was NOT set   <- root of power/clock
+CONFIG_QCOM_SMEM           was NOT set
+CONFIG_INTERCONNECT_QCOM   was NOT set
+CONFIG_ARM_SMMU            was NOT set
+CONFIG_PINCTRL_SM8350      was NOT set   <- no GPIO, reset line unusable
+CONFIG_SM_GCC_8350         was NOT set
+CONFIG_SM_DISPCC_8250      was NOT set
+```
+
+`CONFIG_ARCH_QCOM=y` alone is not enough: it only opens the door.
+
+## v4 — platform drivers enabled
+
+`arch/arm64/configs/odin_defconfig` (6948 lines) is the new baseline.
+Verified present in vmlinux: qmp phy, dwc3-qcom, rpmhpd, sm8350 tlmm,
+dpu_kms, k8_panel_probe.
+
+## Kconfig fix required for display clocks
+
+`SM_DISPCC_8250` depends on `SM_GCC_8150 || SM_GCC_8250`, but sm8350 uses
+`SM_GCC_8350`, so olddefconfig silently dropped it. Patched:
+
+```
+-depends on SM_GCC_8150 || SM_GCC_8250
++depends on SM_GCC_8150 || SM_GCC_8250 || SM_GCC_8350
+```
+
+Without this, dispcc-sm8250.c (which carries `qcom,sm8350-dispcc`) is never
+compiled and the display clock tree is absent.
+
+## Build
+
+```sh
+OUT=out ./build-odin.sh odin_defconfig
+OUT=out ./build-odin.sh Image qcom/sm8350-odin.dtb
+```
+
+Use `-j3`. `-j8` segfaults during LTO vmlinux link on an 8-core/27G host.
+
+## Panel
+
+CSOT k8 (xiaomi 42 02 0a), 1080x2400 DSC cmd mode.
+Sequences parsed from vendor `dsi-panel-k8-42-02-0a-dsc-cmd.dtsi`:
+100 on-commands + 2 off-commands.
+
+Unverified guesses that still need a real device to confirm:
+- panel supplies: vddio = PM8350 L9 (1.2V), vddd = PM8350 L5 (0.88V)
+- reset gpio: tlmm 6
